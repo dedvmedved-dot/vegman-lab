@@ -1,0 +1,88 @@
+digraph YADRO_Lab {
+    rankdir=TB;
+    fontname="Helvetica";
+    bgcolor="#1a1a2e";
+    
+    node [fontname="Helvetica", fontsize=11, style=filled, color=white];
+    edge [fontname="Helvetica", fontsize=9, color="#888888"];
+    
+    subgraph cluster_external {
+        label="Внешний доступ";
+        fontcolor=white;
+        bgcolor="#16213e";
+        style=filled;
+        color="#0f3460";
+        
+        skhome01 [label="skhome01\nUbuntu 24.04\n192.168.0.107", shape=box, fillcolor="#0f3460", fontcolor=white];
+        VPS2 [label="VPS2\n130.17.1.90\nJump Host", shape=box, fillcolor="#0f3460", fontcolor=white];
+    }
+    
+    subgraph cluster_workstation {
+        label="Рабочая станция в тестовой зоне";
+        fontcolor=white;
+        bgcolor="#16213e";
+        style=filled;
+        color="#e94560";
+        
+        node21 [label=".21 Astra Linux\n10.129.11.21\nVLAN 11 (Cisco815)\nДоступ к BMC: 0.4ms", shape=box, fillcolor="#e94560", fontcolor=white];
+    }
+    
+    subgraph cluster_management {
+        label="Management-сеть 10.129.40.0/24";
+        fontcolor=white;
+        bgcolor="#16213e";
+        style=filled;
+        color="#533483";
+        
+        bmc50 [label="BMC 40.50\nVEGMAN S320 #1\n❌ RAID сбой\nне грузится", shape=box, fillcolor="#533483", fontcolor=white];
+        bmc51 [label="BMC 40.51\nVEGMAN S320 #2\n✅ Online", shape=box, fillcolor="#533483", fontcolor=white];
+    }
+    
+    subgraph cluster_test_vlan {
+        label="Тестовая сеть VLAN 308\n10.129.13.0/24 | GW: .1 | DNS: .56";
+        fontcolor=white;
+        bgcolor="#16213e";
+        style=filled;
+        color="#00917c";
+        
+        yadro51 [label="40.51 data\n10.129.13.78\nens1f0.308 VLAN308\nTrunk-порт\n━━━━━━━━━━━━━━\nAstra Linux 1.8\n2× Xeon 6258R (56C/112T)\n754 GB RAM\n2× Quadro RTX 8000\n480GB SSD + 12×SAS\nSSH: root/root", shape=box, fillcolor="#00917c", fontcolor=white, fontsize=10];
+        
+        subgraph cluster_other {
+            label="Чужие серверы (не трогать)";
+            fontcolor="#888888";
+            fontsize=9;
+            bgcolor="#0d1117";
+            style=dashed;
+            color="#888888";
+            
+            other1 [label=".56 bootsman-dlp\n.58 bootsman-rdp\nRED OS 8.0.2", shape=box, fillcolor="#30363d", fontcolor="#8b949e", fontsize=9];
+            other2 [label=".57 GitFlic\nNginx", shape=box, fillcolor="#30363d", fontcolor="#8b949e", fontsize=9];
+            other3 [label=".223/.224 zvirt\nCentOS 8\n1TB RAM", shape=box, fillcolor="#30363d", fontcolor="#8b949e", fontsize=9];
+        }
+    }
+    
+    // Connections
+    skhome01 -> VPS2 [label="SSH туннели:\n:9443→BMC40.50\n:9444→BMC40.51\n:3389→RDP .21", fontcolor="#ffd700"];
+    skhome01 -> node21 [label="RDP :3389", color="#ffd700", fontcolor="#ffd700"];
+    VPS2 -> bmc50 [label="", color="#888888", style=dashed];
+    VPS2 -> bmc51 [label="", color="#888888", style=dashed];
+    bmc50 -> node21 [label="", style=invis];
+    bmc51 -> node21 [label="", style=invis];
+    node21 -> bmc50 [label="ping 0.4ms", color="#00ff00", fontcolor="#00ff00"];
+    node21 -> bmc51 [label="ping 0.4ms", color="#00ff00", fontcolor="#00ff00"];
+    
+    node21 -> yadro51 [label="SSH\nчерез VLAN", color="#00ff00", fontcolor="#00ff00"];
+    bmc51 -> yadro51 [label="BMC\nConsole", color="#533483", fontcolor="#533483", style=dashed];
+    
+    // Legend
+    subgraph cluster_legend {
+        label="Легенда";
+        fontcolor="white";
+        bgcolor="#0d1117";
+        style=dashed;
+        color="#444";
+        fontsize=9;
+        
+        legend1 [label="🟢 Работает\n🟡 Требует настройки\n🔴 Не работает", shape=plain, fontcolor="white", fontsize=9];
+    }
+}
